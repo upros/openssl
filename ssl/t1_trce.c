@@ -483,6 +483,9 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"},
     {TLSEXT_TYPE_compress_certificate, "compress_certificate"},
+# ifndef OPENSSL_NO_RFC8773
+    {TLSEXT_TYPE_cert_with_extern_psk, "cert_with_extern_psk"},
+# endif
     {TLSEXT_TYPE_session_ticket, "session_ticket"},
     {TLSEXT_TYPE_psk, "psk"},
     {TLSEXT_TYPE_early_data, "early_data"},
