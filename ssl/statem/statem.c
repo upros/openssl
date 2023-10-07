@@ -18,6 +18,69 @@
 #include "statem_local.h"
 #include <assert.h>
 
+# ifdef DUMB_DEBUG
+char *stStr(int st) {
+    switch (st) {
+    case TLS_ST_BEFORE: return "TLS_ST_BEFORE";
+    case TLS_ST_OK: return "TLS_ST_OK";
+    case DTLS_ST_CR_HELLO_VERIFY_REQUEST: return "DTLS_ST_CR_HELLO_VERIFY_REQUEST";
+    case TLS_ST_CR_SRVR_HELLO: return "TLS_ST_CR_SRVR_HELLO";
+    case TLS_ST_CR_CERT: return "TLS_ST_CR_CERT";
+    case TLS_ST_CR_COMP_CERT: return "TLS_ST_CR_COMP_CERT";
+    case TLS_ST_CR_CERT_STATUS: return "TLS_ST_CR_CERT_STATUS";
+    case TLS_ST_CR_KEY_EXCH: return "TLS_ST_CR_KEY_EXCH";
+    case TLS_ST_CR_CERT_REQ: return "TLS_ST_CR_CERT_REQ";
+    case TLS_ST_CR_SRVR_DONE: return "TLS_ST_CR_SRVR_DONE";
+    case TLS_ST_CR_SESSION_TICKET: return "TLS_ST_CR_SESSION_TICKET";
+    case TLS_ST_CR_CHANGE: return "TLS_ST_CR_CHANGE";
+    case TLS_ST_CR_FINISHED: return "TLS_ST_CR_FINISHED";
+    case TLS_ST_CW_CLNT_HELLO: return "TLS_ST_CW_CLNT_HELLO";
+    case TLS_ST_CW_CERT: return "TLS_ST_CW_CERT";
+    case TLS_ST_CW_COMP_CERT: return "TLS_ST_CW_COMP_CERT";
+    case TLS_ST_CW_KEY_EXCH: return "TLS_ST_CW_KEY_EXCH";
+    case TLS_ST_CW_CERT_VRFY: return "TLS_ST_CW_CERT_VRFY";
+    case TLS_ST_CW_CHANGE: return "TLS_ST_CW_CHANGE";
+    case TLS_ST_CW_NEXT_PROTO: return "TLS_ST_CW_NEXT_PROTO";
+    case TLS_ST_CW_FINISHED: return "TLS_ST_CW_FINISHED";
+    case TLS_ST_SW_HELLO_REQ: return "TLS_ST_SW_HELLO_REQ";
+    case TLS_ST_SR_CLNT_HELLO: return "TLS_ST_SR_CLNT_HELLO";
+    case DTLS_ST_SW_HELLO_VERIFY_REQUEST: return "DTLS_ST_SW_HELLO_VERIFY_REQUEST";
+    case TLS_ST_SW_SRVR_HELLO: return "TLS_ST_SW_SRVR_HELLO";
+    case TLS_ST_SW_CERT: return "TLS_ST_SW_CERT";
+    case TLS_ST_SW_COMP_CERT: return "TLS_ST_SW_COMP_CERT";
+    case TLS_ST_SW_KEY_EXCH: return "TLS_ST_SW_KEY_EXCH";
+    case TLS_ST_SW_CERT_REQ: return "TLS_ST_SW_CERT_REQ";
+    case TLS_ST_SW_SRVR_DONE: return "TLS_ST_SW_SRVR_DONE";
+    case TLS_ST_SR_CERT: return "TLS_ST_SR_CERT";
+    case TLS_ST_SR_COMP_CERT: return "TLS_ST_SR_COMP_CERT";
+    case TLS_ST_SR_KEY_EXCH: return "TLS_ST_SR_KEY_EXCH";
+    case TLS_ST_SR_CERT_VRFY: return "TLS_ST_SR_CERT_VRFY";
+    case TLS_ST_SR_NEXT_PROTO: return "TLS_ST_SR_NEXT_PROTO";
+    case TLS_ST_SR_CHANGE: return "TLS_ST_SR_CHANGE";
+    case TLS_ST_SR_FINISHED: return "TLS_ST_SR_FINISHED";
+    case TLS_ST_SW_SESSION_TICKET: return "TLS_ST_SW_SESSION_TICKET";
+    case TLS_ST_SW_CERT_STATUS: return "TLS_ST_SW_CERT_STATUS";
+    case TLS_ST_SW_CHANGE: return "TLS_ST_SW_CHANGE";
+    case TLS_ST_SW_FINISHED: return "TLS_ST_SW_FINISHED";
+    case TLS_ST_SW_ENCRYPTED_EXTENSIONS: return "TLS_ST_SW_ENCRYPTED_EXTENSIONS";
+    case TLS_ST_CR_ENCRYPTED_EXTENSIONS: return "TLS_ST_CR_ENCRYPTED_EXTENSIONS";
+    case TLS_ST_CR_CERT_VRFY: return "TLS_ST_CR_CERT_VRFY";
+    case TLS_ST_SW_CERT_VRFY: return "TLS_ST_SW_CERT_VRFY";
+    case TLS_ST_CR_HELLO_REQ: return "TLS_ST_CR_HELLO_REQ";
+    case TLS_ST_SW_KEY_UPDATE: return "TLS_ST_SW_KEY_UPDATE";
+    case TLS_ST_CW_KEY_UPDATE: return "TLS_ST_CW_KEY_UPDATE";
+    case TLS_ST_SR_KEY_UPDATE: return "TLS_ST_SR_KEY_UPDATE";
+    case TLS_ST_CR_KEY_UPDATE: return "TLS_ST_CR_KEY_UPDATE";
+    case TLS_ST_EARLY_DATA: return "TLS_ST_EARLY_DATA";
+    case TLS_ST_PENDING_EARLY_DATA_END: return "TLS_ST_PENDING_EARLY_DATA_END";
+    case TLS_ST_CW_END_OF_EARLY_DATA: return "TLS_ST_CW_END_OF_EARLY_DATA";
+    case TLS_ST_SR_END_OF_EARLY_DATA: return "TLS_ST_SR_END_OF_EARLY_DATA";
+    default: return "UNKNOWN";
+    }
+    return "UNKNOWN";
+}
+# endif
+
 /*
  * This file implements the SSL/TLS/DTLS state machines.
  *
@@ -640,6 +703,9 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
              * Validate that we are allowed to move to the new state and move
              * to that state if so
              */
+# ifdef DUMB_DEBUG	    
+	    printf("read_state_machine: transition %s\n", stStr(s->statem.hand_state));
+# endif	    
             if (!transition(s, mt))
                 return SUB_STATE_ERROR;
 
@@ -681,6 +747,9 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return SUB_STATE_ERROR;
             }
+# ifdef DUMB_DEBUG	    
+	    printf("read_state_machine: process_message %s\n", stStr(s->statem.hand_state));
+# endif	    
             ret = process_message(s, &pkt);
 
             /* Discard the packet data */
@@ -709,6 +778,10 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
             break;
 
         case READ_STATE_POST_PROCESS:
+# ifdef DUMB_DEBUG	    
+	    printf("read_state_machine: post_process_message %s\n",
+		   stStr(s->statem.hand_state));
+# endif	    
             st->read_state_work = post_process_message(s, st->read_state_work);
             switch (st->read_state_work) {
             case WORK_ERROR:
@@ -839,6 +912,9 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
                 else
                     cb(ssl, SSL_CB_CONNECT_LOOP, 1);
             }
+# ifdef DUMB_DEBUG	    
+	    printf("write_state_machine: transition %s\n", stStr(s->statem.hand_state));
+# endif	    
             switch (transition(s)) {
             case WRITE_TRAN_CONTINUE:
                 st->write_state = WRITE_STATE_PRE_WORK;
@@ -856,6 +932,9 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
             break;
 
         case WRITE_STATE_PRE_WORK:
+# ifdef DUMB_DEBUG	    
+	    printf("write_state_machine: pre_work %s\n", stStr(s->statem.hand_state));
+# endif	    
             switch (st->write_state_work = pre_work(s, st->write_state_work)) {
             case WORK_ERROR:
                 check_fatal(s);
@@ -872,6 +951,10 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;
             }
+# ifdef DUMB_DEBUG	    
+            printf("write_state_machine: get_construct_message_f %s\n",
+		   stStr(s->statem.hand_state));
+# endif 	    
             if (!get_construct_message_f(s, &confunc, &mt)) {
                 /* SSLfatal() already called */
                 return SUB_STATE_ERROR;
@@ -929,6 +1012,9 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
             /* Fall through */
 
         case WRITE_STATE_POST_WORK:
+# ifdef DUMB_DEBUG	    
+	    printf("write_state_machine: post_work %s\n", stStr(s->statem.hand_state));
+# endif	    
             switch (st->write_state_work = post_work(s, st->write_state_work)) {
             case WORK_ERROR:
                 check_fatal(s);

@@ -39,6 +39,8 @@
 # include "internal/ssl.h"
 # include "record/record.h"
 
+# define DUMB_DEBUG
+
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
@@ -706,6 +708,9 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_cryptopro_bug,
     TLSEXT_IDX_compress_certificate,
     TLSEXT_IDX_early_data,
+# ifndef OPENSSL_NO_RFC8773
+    TLSEXT_IDX_cert_with_extern_psk,
+# endif
     TLSEXT_IDX_certificate_authorities,
     TLSEXT_IDX_padding,
     TLSEXT_IDX_psk,

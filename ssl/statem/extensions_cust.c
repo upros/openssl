@@ -529,6 +529,10 @@ int SSL_extension_supported(unsigned int ext_type)
     case TLSEXT_TYPE_supported_versions:
     case TLSEXT_TYPE_extended_master_secret:
     case TLSEXT_TYPE_psk_kex_modes:
+# ifndef OPENSSL_NO_RFC8773
+    case TLSEXT_TYPE_cert_with_extern_psk:
+#endif
+
     case TLSEXT_TYPE_cookie:
     case TLSEXT_TYPE_early_data:
     case TLSEXT_TYPE_certificate_authorities:

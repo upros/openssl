@@ -71,6 +71,9 @@ static EXT_LIST ext_list[] = {
     EXT_ENTRY(cryptopro_bug),
     EXT_ENTRY(compress_certificate),
     EXT_ENTRY(early_data),
+# ifndef OPENSSL_NO_RFC8773
+    EXT_ENTRY(cert_with_extern_psk),
+# endif
     EXT_ENTRY(certificate_authorities),
     EXT_ENTRY(padding),
     EXT_ENTRY(psk),

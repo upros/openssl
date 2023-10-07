@@ -514,7 +514,11 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
+# ifndef OPENSSL_NO_RFC8773
+	if (s->hit && !(s->options & SSL_OP_CERT_WITH_EXTERN_PSK))
+# else	
         if (s->hit)
+#endif	    
             st->hand_state = TLS_ST_SW_FINISHED;
         else if (send_certificate_request(s))
             st->hand_state = TLS_ST_SW_CERT_REQ;
@@ -2123,8 +2127,11 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         }
         ciphers = NULL;
     }
-
+# ifndef OPENSSL_NO_RFC8773
+    if (!s->hit || s->options & SSL_OP_CERT_WITH_EXTERN_PSK) {
+# else    
     if (!s->hit) {
+# endif
 #ifdef OPENSSL_NO_COMP
         s->session->compress_meth = 0;
 #else
@@ -2132,8 +2139,14 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 #endif
         if (!tls1_set_server_sigalgs(s)) {
             /* SSLfatal() already called */
+# ifdef DUMB_DEBUG	    
+	    printf("tls1_set_server_sigalgs ERROR\n");
+# endif	    
             goto err;
         }
+# ifdef DUMB_DEBUG	
+	else printf("tls1_set_server_sigalgs sharedlen %ld\n", s->shared_sigalgslen);
+# endif	
     }
 
     sk_SSL_CIPHER_free(ciphers);
@@ -2329,7 +2342,12 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                 }
                 s->s3.tmp.new_cipher = cipher;
             }
-            if (!s->hit) {
+# ifndef OPENSSL_NO_RFC8773
+	    //DO WE NEED A MORE ROBUST CHECK
+            if (!s->hit || s->options & SSL_OP_CERT_WITH_EXTERN_PSK) {
+# else
+	    if (!s->hit) {
+#endif		
                 if (!tls_choose_sigalg(s, 1)) {
                     /* SSLfatal already called */
                     goto err;

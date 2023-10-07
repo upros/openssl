@@ -295,18 +295,31 @@ int tls_parse_ctos_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
                             unsigned int context, X509 *x, size_t chainidx)
 {
     PACKET supported_sig_algs;
-
+# ifdef DUMB_DEBUG    
+    printf("tls_parse_ctos_sig_algs SSL_USE %d, cert %p\n",
+	   SSL_USE_SIGALGS(s), s->cert);
+# endif
     if (!PACKET_as_length_prefixed_2(pkt, &supported_sig_algs)
             || PACKET_remaining(&supported_sig_algs) == 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
 
+# ifndef OPENSSL_NO_RFC8773
+    if (!s->hit || s->options & SSL_OP_CERT_WITH_EXTERN_PSK) {
+	if (!tls1_save_sigalgs(s, &supported_sig_algs, 0)) {
+	    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+	    return 0;
+	}
+    }
+    
+# else    
     if (!s->hit && !tls1_save_sigalgs(s, &supported_sig_algs, 0)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
-
+#endif
+    
     return 1;
 }
 
