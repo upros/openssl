@@ -2343,8 +2343,8 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                 s->s3.tmp.new_cipher = cipher;
             }
 # ifndef OPENSSL_NO_RFC8773
-	    //DO WE NEED A MORE ROBUST CHECK
-            if (!s->hit || s->options & SSL_OP_CERT_WITH_EXTERN_PSK) {
+            if (!s->hit ||
+		(s->extern_psk && s->options & SSL_OP_CERT_WITH_EXTERN_PSK)) {
 # else
 	    if (!s->hit) {
 #endif		

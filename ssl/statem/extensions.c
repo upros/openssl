@@ -1360,13 +1360,13 @@ static EXT_RETURN tls_construct_cert_with_extern_psk(SSL_CONNECTION *s,
    */
 
 # ifdef DUMB_DEBUG    
-    printf("tls_construct_cert_with_extern_psk  OP %ld server %d hit %d ptr %p\n",
+    printf("tls_construct_cert_with_extern_psk  OP %ld server %d hit %d extern_psk %d ptr %p\n",
           s->options & SSL_OP_CERT_WITH_EXTERN_PSK,
-          s->server, s->hit, s->psksession);
+	   s->server, s->hit, s->extern_psk, s->psksession);
 #endif
     
     if (s->options & SSL_OP_CERT_WITH_EXTERN_PSK) {
-       if ((s->server && s->hit)
+       if ((s->server && s->extern_psk)
            || (!s->server && s->psksession != NULL)) {
            if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cert_with_extern_psk)
                || !WPACKET_start_sub_packet_u16(pkt)

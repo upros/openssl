@@ -306,7 +306,7 @@ int tls_parse_ctos_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
     }
 
 # ifndef OPENSSL_NO_RFC8773
-    if (!s->hit || s->options & SSL_OP_CERT_WITH_EXTERN_PSK) {
+    if (!s->hit || (s->extern_psk && s->options & SSL_OP_CERT_WITH_EXTERN_PSK)) {
 	if (!tls1_save_sigalgs(s, &supported_sig_algs, 0)) {
 	    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
 	    return 0;
@@ -1109,6 +1109,9 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
         if (sess != NULL) {
             /* We found a PSK */
+# ifndef OPENSSL_NO_RFC8773
+	    s->extern_psk = 1;
+# endif	    
             SSL_SESSION *sesstmp = ssl_session_dup(sess, 0);
 
             if (sesstmp == NULL) {

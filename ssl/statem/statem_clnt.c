@@ -124,10 +124,11 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
             return 1;
         }
         break;
-
+	
     case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
 # ifndef OPENSSL_NO_RFC8773
-	if (s->hit && !(s->options & SSL_OP_CERT_WITH_EXTERN_PSK)) {
+	if (s->hit &&
+	    !(s->extern_psk && s->options & SSL_OP_CERT_WITH_EXTERN_PSK)) {
 #else
         if (s->hit) {
 # endif

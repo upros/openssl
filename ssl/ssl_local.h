@@ -1445,6 +1445,9 @@ struct ssl_connection_st {
                           const void *buf, size_t len, SSL *ssl, void *arg);
     void *msg_callback_arg;
     int hit;                    /* reusing a previous session */
+# ifndef OPENSSL_NO_RFC8773
+    int extern_psk;
+# endif
     X509_VERIFY_PARAM *param;
     /* Per connection DANE state */
     SSL_DANE dane;

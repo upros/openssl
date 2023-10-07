@@ -2024,6 +2024,9 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
     s->session = s->psksession;
     s->psksession = NULL;
     s->hit = 1;
+# ifndef OPENSSL_NO_RFC8773
+    s->extern_psk = 1;
+# endif
     /* Early data is only allowed if we used the first ticket */
     if (identity != 0)
         s->ext.early_data_ok = 0;
