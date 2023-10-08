@@ -513,6 +513,9 @@ typedef enum OPTION_choice {
     OPT_ENABLE_PHA,
     OPT_ENABLE_SERVER_RPK,
     OPT_ENABLE_CLIENT_RPK,
+#ifndef OPENSSL_NO_RFC8773
+    OPT_CERT_WITH_EXTERN_PSK,
+#endif
     OPT_SCTP_LABEL_BUG,
     OPT_KTLS,
     OPT_R_ENUM, OPT_PROV_ENUM
@@ -720,6 +723,9 @@ const OPTIONS s_client_options[] = {
      "(deprecated) Tolerate other than the known g N values."},
     {"srp_strength", OPT_SRP_STRENGTH, 'p',
      "(deprecated) Minimal length in bits for N"},
+#endif
+#ifndef OPENSSL_NO_RFC8773
+    {"cert_with_extern_psk", OPT_CERT_WITH_EXTERN_PSK, '-', "Use cert with extern PSK auth (RFC8773)"},
 #endif
 #ifndef OPENSSL_NO_KTLS
     {"ktls", OPT_KTLS, '-', "Enable Kernel TLS for sending and receiving"},
@@ -947,6 +953,9 @@ int s_client_main(int argc, char **argv)
     char *psksessf = NULL;
     int enable_pha = 0;
     int enable_client_rpk = 0;
+#ifndef OPENSSL_NO_RFC8773
+    int cert_with_extern_psk = 0;
+#endif
 #ifndef OPENSSL_NO_SCTP
     int sctp_label_bug = 0;
 #endif
@@ -1571,6 +1580,11 @@ int s_client_main(int argc, char **argv)
         case OPT_ENABLE_CLIENT_RPK:
             enable_client_rpk = 1;
             break;
+#ifndef OPENSSL_NO_RFC8773
+	case OPT_CERT_WITH_EXTERN_PSK:
+	    cert_with_extern_psk = 1;
+	    break;
+#endif
         }
     }
 
@@ -1842,6 +1856,10 @@ int s_client_main(int argc, char **argv)
 
     if (ignore_unexpected_eof)
         SSL_CTX_set_options(ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
+#ifndef OPENSSL_NO_RFC8773
+    if (cert_with_extern_psk)
+	SSL_CTX_set_options(ctx, SSL_OP_CERT_WITH_EXTERN_PSK);
+#endif
 #ifndef OPENSSL_NO_KTLS
     if (enable_ktls)
         SSL_CTX_set_options(ctx, SSL_OP_ENABLE_KTLS);

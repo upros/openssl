@@ -725,6 +725,9 @@ typedef enum OPTION_choice {
     OPT_TFO, OPT_CERT_COMP,
     OPT_ENABLE_SERVER_RPK,
     OPT_ENABLE_CLIENT_RPK,
+#ifndef OPENSSL_NO_RFC8773
+    OPT_CERT_WITH_EXTERN_PSK,
+#endif
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -978,6 +981,9 @@ const OPTIONS s_server_options[] = {
 #endif
     {"enable_server_rpk", OPT_ENABLE_SERVER_RPK, '-', "Enable raw public keys (RFC7250) from the server"},
     {"enable_client_rpk", OPT_ENABLE_CLIENT_RPK, '-', "Enable raw public keys (RFC7250) from the client"},
+#ifndef OPENSSL_NO_RFC8773
+    {"cert_with_extern_psk", OPT_CERT_WITH_EXTERN_PSK, '-', "Use cert with extern PSK auth (RFC8773)"},
+#endif
     OPT_R_OPTIONS,
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
@@ -1076,7 +1082,9 @@ int s_server_main(int argc, char *argv[])
     int tfo = 0;
     int cert_comp = 0;
     int enable_server_rpk = 0;
-
+#ifndef OPENSSL_NO_RFC8773
+    int cert_with_extern_psk = 0;
+#endif
     /* Init of few remaining global variables */
     local_argc = argc;
     local_argv = argv;
@@ -1688,6 +1696,11 @@ int s_server_main(int argc, char *argv[])
         case OPT_ENABLE_CLIENT_RPK:
             enable_client_rpk = 1;
             break;
+#ifndef OPENSSL_NO_RFC8773
+	case OPT_CERT_WITH_EXTERN_PSK:
+	    cert_with_extern_psk = 1;
+	    break;
+#endif
         }
     }
 
@@ -1958,6 +1971,10 @@ int s_server_main(int argc, char *argv[])
 
     if (ignore_unexpected_eof)
         SSL_CTX_set_options(ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
+#ifndef OPENSSL_NO_RFC8773
+    if (cert_with_extern_psk)
+	SSL_CTX_set_options(ctx, SSL_OP_CERT_WITH_EXTERN_PSK);
+#endif
 #ifndef OPENSSL_NO_KTLS
     if (enable_ktls)
         SSL_CTX_set_options(ctx, SSL_OP_ENABLE_KTLS);
