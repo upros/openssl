@@ -18,6 +18,49 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 
+#ifdef DUMB_DEBUG
+char *extStr(int st) {
+    switch (st) {
+    case TLSEXT_TYPE_server_name: return "server_name";
+    case TLSEXT_TYPE_max_fragment_length: return "max_fragment_length";
+    case TLSEXT_TYPE_client_certificate_url: return "client_certificate_url";
+    case TLSEXT_TYPE_trusted_ca_keys: return "trusted_ca_keys";
+    case TLSEXT_TYPE_status_request: return "status_rerquest";
+    case TLSEXT_TYPE_user_mapping: return "user_mapping";
+    case TLSEXT_TYPE_client_authz: return "client_authz";
+    case TLSEXT_TYPE_server_authz: return "server_authz";
+    case TLSEXT_TYPE_cert_type: return "cert_type";
+    case TLSEXT_TYPE_supported_groups: return "supported_groups";
+    case TLSEXT_TYPE_ec_point_formats: return "ec_point_formats";
+    case TLSEXT_TYPE_srp: return "srp";
+    case TLSEXT_TYPE_signature_algorithms: return "signature_algorithms";
+    case TLSEXT_TYPE_use_srtp: return "srtp";
+    case TLSEXT_TYPE_application_layer_protocol_negotiation: return "alpn";
+    case TLSEXT_TYPE_signed_certificate_timestamp: return "signed_certificate_timestamp";
+    case TLSEXT_TYPE_client_cert_type: return "client_cert_type";
+    case TLSEXT_TYPE_server_cert_type: return "server_cert_type";
+    case TLSEXT_TYPE_padding: return "padding";
+    case TLSEXT_TYPE_encrypt_then_mac: return "encrypt_then_mac";
+    case TLSEXT_TYPE_extended_master_secret: return "extended_master_secret";
+    case TLSEXT_TYPE_compress_certificate: return "compress_certificate";
+    case TLSEXT_TYPE_cert_with_extern_psk: return "cert_with_extern_psk";
+    case TLSEXT_TYPE_session_ticket: return "session_ticket";
+    case TLSEXT_TYPE_psk: return "psk";
+    case TLSEXT_TYPE_early_data: return "early_data";
+    case TLSEXT_TYPE_supported_versions: return "supported_versions";
+    case TLSEXT_TYPE_cookie: return "cookie";
+    case TLSEXT_TYPE_psk_kex_modes: return "psk_kex_modes";
+    case TLSEXT_TYPE_certificate_authorities: return "certificate_authorities";
+    case TLSEXT_TYPE_post_handshake_auth: return "post_handshake_auth";
+    case TLSEXT_TYPE_signature_algorithms_cert: return "signature_algorithms_cert";
+    case TLSEXT_TYPE_key_share: return "key_share";
+    case TLSEXT_TYPE_quic_transport_parameters: return "quic_transport_parameters";
+    default: return "UNKNOWN";
+    }
+    return "UNKNOWN";
+}
+#endif
+
 static int final_renegotiate(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_server_name(SSL_CONNECTION *s, unsigned int context);
 static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent);
@@ -770,6 +813,10 @@ int tls_parse_extension(SSL_CONNECTION *s, TLSEXT_INDEX idx, int context,
     if (currext->parsed)
         return 1;
 
+#ifdef DUMB_DEBUG
+	printf("tls_parse_extension: %s\n", extStr(currext->type));
+#endif
+
     currext->parsed = 1;
 
     if (idx < OSSL_NELEM(ext_defs)) {
@@ -918,7 +965,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
         /* Skip if not relevant for our context */
         if (!should_add_extension(s, thisexd->context, context, max_version))
             continue;
-
+	
         construct = s->server ? thisexd->construct_stoc
                               : thisexd->construct_ctos;
 
@@ -930,6 +977,10 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
             /* SSLfatal() already called */
             return 0;
         }
+#ifdef DUMB_DEBUG
+	if (ret == EXT_RETURN_SENT)
+	    printf("tls_construct_extensions: %s\n", extStr(thisexd->type));
+#endif
         if (ret == EXT_RETURN_SENT
                 && (context & (SSL_EXT_CLIENT_HELLO
                                | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST
