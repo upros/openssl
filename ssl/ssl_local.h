@@ -1447,6 +1447,7 @@ struct ssl_connection_st {
     int hit;                    /* reusing a previous session */
 # ifndef OPENSSL_NO_RFC8773
     int extern_psk;
+    int cert_with_extern_psk;
 # endif
     X509_VERIFY_PARAM *param;
     /* Per connection DANE state */

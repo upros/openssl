@@ -418,8 +418,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
         | SSL_EXT_TLS1_3_ONLY,
         NULL, tls_parse_cert_with_extern_psk,
-       tls_parse_cert_with_extern_psk,
-       tls_construct_cert_with_extern_psk,
+        tls_parse_cert_with_extern_psk,
+        tls_construct_cert_with_extern_psk,
         tls_construct_cert_with_extern_psk, NULL
     },
 # endif
@@ -1360,13 +1360,13 @@ static EXT_RETURN tls_construct_cert_with_extern_psk(SSL_CONNECTION *s,
    */
 
 # ifdef DUMB_DEBUG    
-    printf("tls_construct_cert_with_extern_psk  OP %ld server %d hit %d extern_psk %d ptr %p\n",
+    printf("tls_construct_cert_with_extern_psk  OP %ld server %d hit %d extern_psk %d cert_with_extern_psk %d ptr %p\n",
           s->options & SSL_OP_CERT_WITH_EXTERN_PSK,
-	   s->server, s->hit, s->extern_psk, s->psksession);
+	   s->server, s->hit, s->extern_psk, s->cert_with_extern_psk, s->psksession);
 #endif
     
     if (s->options & SSL_OP_CERT_WITH_EXTERN_PSK) {
-       if ((s->server && s->extern_psk)
+       if ((s->server && s->extern_psk && s->cert_with_extern_psk)
            || (!s->server && s->psksession != NULL)) {
            if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cert_with_extern_psk)
                || !WPACKET_start_sub_packet_u16(pkt)
@@ -1395,6 +1395,8 @@ static int tls_parse_cert_with_extern_psk(SSL_CONNECTION *s, PACKET *pkt,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
+    
+    s->cert_with_extern_psk = 1;
 
     return 1;
 }

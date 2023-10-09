@@ -515,7 +515,10 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
 # ifndef OPENSSL_NO_RFC8773
-	if (s->hit && !(s->options & SSL_OP_CERT_WITH_EXTERN_PSK))
+	if (s->hit &&
+	    !(s->options & SSL_OP_CERT_WITH_EXTERN_PSK
+	      && s->extern_psk
+	      && s->cert_with_extern_psk))
 # else	
         if (s->hit)
 #endif	    
@@ -2344,7 +2347,8 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
             }
 # ifndef OPENSSL_NO_RFC8773
             if (!s->hit ||
-		(s->extern_psk && s->options & SSL_OP_CERT_WITH_EXTERN_PSK)) {
+		(s->extern_psk && s->cert_with_extern_psk
+		 && s->options & SSL_OP_CERT_WITH_EXTERN_PSK)) {
 # else
 	    if (!s->hit) {
 #endif		

@@ -1207,6 +1207,9 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         if (!EVP_MD_is_a(md,
                 EVP_MD_get0_name(ssl_md(sctx,
                                         s->s3.tmp.new_cipher->algorithm2)))) {
+#ifdef DUMB_DEBUG
+	    printf("tls_parse_ctos_psk: incompatible ciphersuite\n");
+#endif
             /* The ciphersuite is not compatible with this session. */
             SSL_SESSION_free(sess);
             sess = NULL;
