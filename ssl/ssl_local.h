@@ -45,6 +45,8 @@
  *
  * This code is early and not yet rigorously tested.
  *
+ * And this comment and the DUMB_DEBUG stuff should be deleted before any merge.
+ *
  * The new extension TLSEXT_TYPE_cert_with_extern_psk is defined.
  *
  * Code to construct and parse this is included in extensions.c. The same
@@ -56,9 +58,17 @@
  * The existing struct ssl_connection_st 'hit' field is used to flag that a 
  * either a resumption or external PSK session was found. As we must differentiate
  * between these two types of sessions, we add 'extern_psk' to explicitly flag the
- * session as an external PSK, not a resumption, session. Additionally, the
- * 'cert_with_extern_psk' flag is used to indicate if the peer sent this extension
- * and is requesting RFC8773 behavior.
+ * session as an external PSK, not a resumption, session.
+ 
+ * Additionally, the 'cert_with_extern_psk' flag is used to indicate if the peer
+ * sent this extension and is requesting RFC8773 behavior.
+ *
+ * Additionally, the 'early_data' flag is used to indicate if the server is
+ * attempting early_data. If so, then an error is raised if the client
+ * requested cert_with_extern_psk.
+ *
+ * Possibly SSL_EXT_FLAG_RECEIVED was meant for this, but that flag is not currently
+ * used for normal extensions anywhere in the code.
  *
  * Before sending the extension, tls_construct_cert_with_extern_psk checks that
  *  1. Stack is configured with SSL_OP_CERT_WITH_EXTERN_PSK, 
