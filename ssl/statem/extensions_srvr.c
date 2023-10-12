@@ -982,7 +982,13 @@ int tls_parse_ctos_early_data(SSL_CONNECTION *s, PACKET *pkt, unsigned int conte
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
         return 0;
     }
-
+# ifndef OPENSSL_NO_RFC8773
+    if (s->cert_with_extern_psk) {
+	SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    s->early_data = 1;
+# endif
     return 1;
 }
 
@@ -1111,7 +1117,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             /* We found a PSK */
 # ifndef OPENSSL_NO_RFC8773
 	    s->extern_psk = 1;
-# endif	    
+# endif   
             SSL_SESSION *sesstmp = ssl_session_dup(sess, 0);
 
             if (sesstmp == NULL) {
@@ -1198,7 +1204,6 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 s->ext.early_data_ok = 1;
             }
         }
-
         md = ssl_md(sctx, sess->cipher->algorithm2);
         if (md == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1214,12 +1219,15 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             SSL_SESSION_free(sess);
             sess = NULL;
             s->ext.early_data_ok = 0;
-            s->ext.ticket_expected = 0;
+	    s->ext.ticket_expected = 0;
+# ifndef OPENSSL_NO_RFC8773
+	    s->extern_psk = 0;
+# endif   
             continue;
         }
         break;
     }
-
+    
     if (sess == NULL)
         return 1;
 
@@ -1237,7 +1245,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             goto err;
         }
     }
-
+    
     if (PACKET_remaining(&binder) != hashsize) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
@@ -1248,7 +1256,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         /* SSLfatal() already called */
         goto err;
     }
-
+    
     s->ext.tick_identity = id;
 
     SSL_SESSION_free(s->session);
@@ -1256,6 +1264,9 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     return 1;
 err:
     SSL_SESSION_free(sess);
+# ifndef OPENSSL_NO_RFC8773
+    s->extern_psk = 0;
+# endif   
     return 0;
 }
 

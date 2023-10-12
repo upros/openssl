@@ -681,6 +681,9 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
             s->ext.ticket_expected = 1;
         }
     }
+# ifndef OPENSSL_NO_RFC8773
+    s->extern_psk = 0;
+# endif   
     if (fatal)
         return -1;
 

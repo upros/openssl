@@ -19,8 +19,9 @@
 #include "statem_local.h"
 
 #ifdef DUMB_DEBUG
-char *extStr(int st) {
-    switch (st) {
+char unknown[50];
+char *extStr(int ext) {
+    switch (ext) {
     case TLSEXT_TYPE_server_name: return "server_name";
     case TLSEXT_TYPE_max_fragment_length: return "max_fragment_length";
     case TLSEXT_TYPE_client_certificate_url: return "client_certificate_url";
@@ -43,7 +44,9 @@ char *extStr(int st) {
     case TLSEXT_TYPE_encrypt_then_mac: return "encrypt_then_mac";
     case TLSEXT_TYPE_extended_master_secret: return "extended_master_secret";
     case TLSEXT_TYPE_compress_certificate: return "compress_certificate";
+#ifndef OPENSSL_NO_RFC8773
     case TLSEXT_TYPE_cert_with_extern_psk: return "cert_with_extern_psk";
+#endif
     case TLSEXT_TYPE_session_ticket: return "session_ticket";
     case TLSEXT_TYPE_psk: return "psk";
     case TLSEXT_TYPE_early_data: return "early_data";
@@ -55,7 +58,10 @@ char *extStr(int st) {
     case TLSEXT_TYPE_signature_algorithms_cert: return "signature_algorithms_cert";
     case TLSEXT_TYPE_key_share: return "key_share";
     case TLSEXT_TYPE_quic_transport_parameters: return "quic_transport_parameters";
-    default: return "UNKNOWN";
+    default: {
+	sprintf(unknown, "UNKNOWN %d", ext);
+	return unknown;
+    }
     }
     return "UNKNOWN";
 }
@@ -972,6 +978,9 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
         if (construct == NULL)
             continue;
 
+#ifdef DUMB_DEBUG
+	printf("tls_construct_extensions construct(): %s\n", extStr(thisexd->type));
+#endif	
         ret = construct(s, pkt, context, x, chainidx);
         if (ret == EXT_RETURN_FAIL) {
             /* SSLfatal() already called */
@@ -979,7 +988,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
         }
 #ifdef DUMB_DEBUG
 	if (ret == EXT_RETURN_SENT)
-	    printf("tls_construct_extensions: %s\n", extStr(thisexd->type));
+	    printf("tls_construct_extensions: SENT %s\n", extStr(thisexd->type));
 #endif
         if (ret == EXT_RETURN_SENT
                 && (context & (SSL_EXT_CLIENT_HELLO
@@ -1440,13 +1449,18 @@ static int tls_parse_cert_with_extern_psk(SSL_CONNECTION *s, PACKET *pkt,
                                              size_t chainidx)
 {
 # ifdef DUMB_DEBUG    
-    printf("tls_parse_cert_with_extern_psk\n");
+    printf("tls_parse_cert_with_extern_psk early_data %d\n", s->early_data);
 # endif    
     if (PACKET_remaining(pkt) != 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
-    
+
+    if (s->early_data) {
+	SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+ 
     s->cert_with_extern_psk = 1;
 
     return 1;

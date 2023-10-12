@@ -2142,14 +2142,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 #endif
         if (!tls1_set_server_sigalgs(s)) {
             /* SSLfatal() already called */
-# ifdef DUMB_DEBUG	    
-	    printf("tls1_set_server_sigalgs ERROR\n");
-# endif	    
             goto err;
         }
-# ifdef DUMB_DEBUG	
-	else printf("tls1_set_server_sigalgs sharedlen %ld\n", s->shared_sigalgslen);
-# endif	
     }
 
     sk_SSL_CIPHER_free(ciphers);
