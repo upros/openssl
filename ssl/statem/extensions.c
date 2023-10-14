@@ -1420,7 +1420,7 @@ static EXT_RETURN tls_construct_cert_with_extern_psk(SSL_CONNECTION *s,
    */
 
 # ifdef DUMB_DEBUG    
-    printf("tls_construct_cert_with_extern_psk  OP %ld server %d hit %d extern_psk %d cert_with_extern_psk %d ptr %p\n",
+    printf("tls_construct_cert_with_extern_psk  OP %ld server %d hit %d extern_psk %d cert_with_extern_psk %d psksession %p\n",
           s->options & SSL_OP_CERT_WITH_EXTERN_PSK,
 	   s->server, s->hit, s->extern_psk, s->cert_with_extern_psk, s->psksession);
 #endif

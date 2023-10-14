@@ -2131,7 +2131,10 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         ciphers = NULL;
     }
 # ifndef OPENSSL_NO_RFC8773
-    if (!s->hit || s->options & SSL_OP_CERT_WITH_EXTERN_PSK) {
+    if (!s->hit ||
+	(s->options & SSL_OP_CERT_WITH_EXTERN_PSK
+	 && s->extern_psk
+	 && s->cert_with_extern_psk)) {
 # else    
     if (!s->hit) {
 # endif
