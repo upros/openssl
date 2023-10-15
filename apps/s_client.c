@@ -515,6 +515,8 @@ typedef enum OPTION_choice {
     OPT_ENABLE_CLIENT_RPK,
 #ifndef OPENSSL_NO_RFC8773
     OPT_CERT_WITH_EXTERN_PSK,
+    OPT_ALLOW_NO_DHE_KEX,
+    OPT_NO_DHE_KEX,
 #endif
     OPT_SCTP_LABEL_BUG,
     OPT_KTLS,
@@ -726,6 +728,8 @@ const OPTIONS s_client_options[] = {
 #endif
 #ifndef OPENSSL_NO_RFC8773
     {"cert_with_extern_psk", OPT_CERT_WITH_EXTERN_PSK, '-', "Use cert with extern PSK auth (RFC8773)"},
+    {"allow_no_dhe_kex", OPT_ALLOW_NO_DHE_KEX, '-', "Allow non-(ec)dhe key exchange mode"},
+    {"no_dhe_kex", OPT_NO_DHE_KEX, '-', "Do not use (ec)dhe key exchange mode"},
 #endif
 #ifndef OPENSSL_NO_KTLS
     {"ktls", OPT_KTLS, '-', "Enable Kernel TLS for sending and receiving"},
@@ -955,6 +959,8 @@ int s_client_main(int argc, char **argv)
     int enable_client_rpk = 0;
 #ifndef OPENSSL_NO_RFC8773
     int cert_with_extern_psk = 0;
+    int allow_no_dhe_kex = 0;
+    int no_dhe_kex = 0;
 #endif
 #ifndef OPENSSL_NO_SCTP
     int sctp_label_bug = 0;
@@ -1584,6 +1590,12 @@ int s_client_main(int argc, char **argv)
 	case OPT_CERT_WITH_EXTERN_PSK:
 	    cert_with_extern_psk = 1;
 	    break;
+	case OPT_ALLOW_NO_DHE_KEX:
+	    allow_no_dhe_kex = 1;
+	    break;
+	case OPT_NO_DHE_KEX:
+	    no_dhe_kex = 1;
+	    break;
 #endif
         }
     }
@@ -1859,6 +1871,10 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_RFC8773
     if (cert_with_extern_psk)
 	SSL_CTX_set_options(ctx, SSL_OP_CERT_WITH_EXTERN_PSK);
+    if (allow_no_dhe_kex)
+	SSL_CTX_set_options(ctx, SSL_OP_ALLOW_NO_DHE_KEX);
+    if (no_dhe_kex)
+	SSL_CTX_set_options(ctx, SSL_OP_NO_DHE_KEX);
 #endif
 #ifndef OPENSSL_NO_KTLS
     if (enable_ktls)

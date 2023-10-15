@@ -578,11 +578,15 @@ EXT_RETURN tls_construct_ctos_psk_kex_modes(SSL_CONNECTION *s, WPACKET *pkt,
 {
 #ifndef OPENSSL_NO_TLS1_3
     int nodhe = s->options & SSL_OP_ALLOW_NO_DHE_KEX;
+    int allowdhe = (s->options & SSL_OP_NO_DHE_KEX) == 0 ? 1: 0;
+    
+    if (!allowdhe)
+	nodhe = 1;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk_kex_modes)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u8(pkt)
-            || !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE_DHE)
+	    || (allowdhe && !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE_DHE))
             || (nodhe && !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE))
             || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)) {
@@ -663,6 +667,11 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     size_t i, num_groups = 0;
     const uint16_t *pgroups = NULL;
     uint16_t curve_id = 0;
+
+# ifndef OPENSSL_NO_RFC8773
+    if ((s->options & SSL_OP_NO_DHE_KEX) != 0)
+	return EXT_RETURN_NOT_SENT;
+# endif
 
     /* key_share extension */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)

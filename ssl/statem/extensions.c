@@ -1420,14 +1420,16 @@ static EXT_RETURN tls_construct_cert_with_extern_psk(SSL_CONNECTION *s,
    */
 
 # ifdef DUMB_DEBUG    
-    printf("tls_construct_cert_with_extern_psk  OP %ld server %d hit %d extern_psk %d cert_with_extern_psk %d psksession %p\n",
+    printf("tls_construct_cert_with_extern_psk  OP %ld server %d hit %d extern_psk %d cert_with_extern_psk %d NO_DHE_KEX %ld psksession %p\n",
           s->options & SSL_OP_CERT_WITH_EXTERN_PSK,
-	   s->server, s->hit, s->extern_psk, s->cert_with_extern_psk, s->psksession);
+	   s->server, s->hit, s->extern_psk, s->cert_with_extern_psk,
+	   s->options & SSL_OP_NO_DHE_KEX, s->psksession);
 #endif
     
     if (s->options & SSL_OP_CERT_WITH_EXTERN_PSK) {
        if ((s->server && s->extern_psk && s->cert_with_extern_psk)
-           || (!s->server && s->psksession != NULL)) {
+           || (!s->server && s->psksession != NULL
+	       && !(s->options & SSL_OP_NO_DHE_KEX))) {
            if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cert_with_extern_psk)
                || !WPACKET_start_sub_packet_u16(pkt)
                 || !WPACKET_close(pkt)) {
@@ -1449,7 +1451,8 @@ static int tls_parse_cert_with_extern_psk(SSL_CONNECTION *s, PACKET *pkt,
                                              size_t chainidx)
 {
 # ifdef DUMB_DEBUG    
-    printf("tls_parse_cert_with_extern_psk early_data %d\n", s->early_data);
+    printf("tls_parse_cert_with_extern_psk early_data %d KE_DHE mode %d\n",
+	   s->early_data, s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE);
 # endif    
     if (PACKET_remaining(pkt) != 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -1457,6 +1460,11 @@ static int tls_parse_cert_with_extern_psk(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     if (s->early_data) {
+	SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    if ((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0) {
 	SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
         return 0;
     }
