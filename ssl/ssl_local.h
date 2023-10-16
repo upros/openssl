@@ -90,6 +90,10 @@
  * when RFC8773 is negotiated. This is needed when server needs to send a cert and use
  * a PSK.
  *
+ * A new option OPT_ALLOW_NO_DHE_KEX is also defined which allows PSK handshake
+ * without a DHE key_share. This is added so that we can check that RFC8773
+ * is not allowed if client does not use a DHE key_share with PSK.
+ *
  * For testing purposes, s_server and s_client support the new option -cert_with_extern_psk
  * which sets the SSL_OP_CERT_WITH_EXTERN_PSK option.
  */
