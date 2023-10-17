@@ -43,7 +43,8 @@
 
 /* This comment gives an overview of the RFC8733 implementation approach.
  *
- * This code is early and not yet rigorously tested.
+ * This code is early and not yet rigorously tested, and has no unit tests
+ * added yet.
  *
  * And this comment and the DUMB_DEBUG stuff should be deleted before any merge.
  *
@@ -52,31 +53,32 @@
  * Code to construct and parse this is included in extensions.c. The same
  * functions are used for client and server state machines.
  *
+ * A new option SSL_OP_CERT_WITH_EXTERN_PSK is defined.
+ *
  * Clients and servers set SSL_OP_CERT_WITH_EXTERN_PSK using SSL_CTX_set_options
  * to indicate that they want to attempt RFC8773 on a session.
  *
  * The existing struct ssl_connection_st 'hit' field is used to flag that a 
  * either a resumption or external PSK session was found. As we must differentiate
- * between these two types of sessions, we add 'extern_psk' to explicitly flag the
+ * between these two types of sessions, 'extern_psk' is added to explicitly flag the
  * session as an external PSK, not a resumption, session.
  
  * Additionally, the 'cert_with_extern_psk' flag is used to indicate if the peer
  * sent this extension and is requesting RFC8773 behavior.
  *
- * Additionally, the 'early_data' flag is used to indicate if the server is
- * attempting early_data. If so, then an error is raised if the client
- * requested cert_with_extern_psk.
+ * Additionally, the 'early_data' flag is used to indicate if the client is
+ * attempting early_data. If so, then the server rejects the handshake and 
+ * raises a TLS error if the client also requested cert_with_extern_psk.
  *
- * Possibly SSL_EXT_FLAG_RECEIVED was meant for this, but that flag is not currently
- * used for normal extensions anywhere in the code.
+ * Possibly SSL_EXT_FLAG_RECEIVED was meant to indicate if a peer sent specific
+ * extensions, but that flag is not currently set for normal extensions anywhere
+ * in the code. Hence, this fork currently the new fields uses early_data and
+ * cert_with_extern_psk.
  *
  * Before sending the extension, tls_construct_cert_with_extern_psk checks that
  *  1. Stack is configured with SSL_OP_CERT_WITH_EXTERN_PSK, 
  *  2. an extern PSK and not a resumption PSK is used
  *  3. the peer requested RFC8773
- *
- * tls_parse_ctos_sig_algs is updated to set sigalgs for extern PSKs if necessary.
- * This is needed when server needs to send a cert and use a PSK.
  *
  * Client state machine in ossl_statem_client13_read_transition is updated when
  * transitioning to TLS_ST_CR_ENCRYPTED_EXTENSIONS. If RFC8773 is negotiated, then
@@ -86,16 +88,26 @@
  * transitioning to TLS_ST_CR_ENCRYPTED_EXTENSIONS. If RFC8773 is negotiated, then
  * need to continue to handle certs.
  *
+ * tls_parse_ctos_sig_algs is updated to set sigalgs for extern PSKs if necessary.
+ * This is needed as server needs to send a cert and use a PSK.
+ *
  * tls_early_post_process_client_hello is updated to call tls1_set_server_sigalgs
  * when RFC8773 is negotiated. This is needed when server needs to send a cert and use
  * a PSK.
  *
- * A new option OPT_ALLOW_NO_DHE_KEX is also defined which allows PSK handshake
+ * A new option SSL_OPT_NO_DHE_KEX is also defined which allows PSK handshake
  * without a DHE key_share. This is added so that we can check that RFC8773
  * is not allowed if client does not use a DHE key_share with PSK.
+ 
+ * Note that the existing SSL_OP_ALLOW_NO_DHE_KEX option only adds the 'psk_ke' flag to
+ * the psk_key_exchange_modes extension, and currently OpenSSL always includes the
+ * 'psk_dhe_ke' flag. The new SSL_OPT_NO_DHE_KEX option allows the client to only
+ * send the 'psk_ke' flag, thus allowing PSK with no key_share.
  *
- * For testing purposes, s_server and s_client support the new option -cert_with_extern_psk
- * which sets the SSL_OP_CERT_WITH_EXTERN_PSK option.
+ * For testing purposes, s_server and s_client support the new options:
+ * -cert_with_extern_psk which sets the SSL_OP_CERT_WITH_EXTERN_PSK option
+ * -allow_no_dhe_kex which sets the SSL_OP_ALLOW_NO_DHE_KEX option
+ * -no_dhe_kex which sets the SSL_OP_NO_DHE_KEX option (s_client only)
  */
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
