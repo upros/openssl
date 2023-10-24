@@ -72,11 +72,11 @@
  *
  * Possibly SSL_EXT_FLAG_RECEIVED was meant to indicate if a peer sent specific
  * extensions, but that flag is not currently set for normal extensions anywhere
- * in the code. Hence, this fork currently the new fields uses early_data and
+ * in the code. Hence, this fork currently uses the new fields early_data and
  * cert_with_extern_psk.
  *
  * Before sending the extension, tls_construct_cert_with_extern_psk checks that
- *  1. Stack is configured with SSL_OP_CERT_WITH_EXTERN_PSK, 
+ *  1. Session is configured with SSL_OP_CERT_WITH_EXTERN_PSK, 
  *  2. an extern PSK and not a resumption PSK is used
  *  3. the peer requested RFC8773
  *
